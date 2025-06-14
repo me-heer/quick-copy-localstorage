@@ -7,11 +7,11 @@ const addBtn = document.getElementById('addBtn');
 const storageKey = document.getElementById('storageKey');
 const saveKeyBtn = document.getElementById('saveKeyBtn');
 
-// Default allowed websites
-const defaultWebsites = ['*.senpiper.com'];
+// No default websites - users must configure manually
+const defaultWebsites = [];
 
-// Default storage key
-const defaultStorageKey = 'authToken';
+// No default storage key - users must configure manually
+const defaultStorageKey = '';
 
 // Show status message
 function showStatus(message, type = 'info') {
@@ -40,7 +40,11 @@ async function loadStorageKey() {
 
 // Update copy button text
 function updateCopyButtonText(key) {
-  copyBtn.textContent = `Copy ${key}`;
+  if (key && key.trim()) {
+    copyBtn.textContent = `Copy ${key}`;
+  } else {
+    copyBtn.textContent = 'Copy Value';
+  }
 }
 
 // Save storage key
@@ -215,6 +219,18 @@ async function copyAuthToken() {
     const result = await chrome.storage.sync.get(['allowedWebsites', 'storageKey']);
     const websites = result.allowedWebsites || defaultWebsites;
     const keyToSearch = result.storageKey || defaultStorageKey;
+    
+    // Check if storage key is configured
+    if (!keyToSearch || !keyToSearch.trim()) {
+      showStatus('Please set a localStorage key first', 'error');
+      return;
+    }
+    
+    // Check if websites are configured
+    if (websites.length === 0) {
+      showStatus('Please add at least one website first', 'error');
+      return;
+    }
     
     const currentUrl = new URL(tab.url);
     const isAllowed = websites.some(pattern => {

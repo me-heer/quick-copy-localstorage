@@ -4,11 +4,11 @@
 chrome.runtime.onInstalled.addListener((details) => {
   console.log('AuthToken Copier extension installed/updated');
   
-  // Set default allowed websites and storage key on first install
+  // No default setup - users must configure manually
   if (details.reason === 'install') {
     chrome.storage.sync.set({
-      allowedWebsites: ['*.senpiper.com'],
-      storageKey: 'authToken'
+      allowedWebsites: [],
+      storageKey: ''
     });
   }
   
@@ -50,7 +50,7 @@ async function updateContextMenu(tab) {
     if (!tab.url) return;
     
     const result = await chrome.storage.sync.get(['allowedWebsites']);
-    const websites = result.allowedWebsites || ['*.senpiper.com'];
+    const websites = result.allowedWebsites || [];
     
     const currentUrl = new URL(tab.url);
     const isAllowed = websites.some(pattern => {
@@ -80,7 +80,7 @@ async function updateContextMenu(tab) {
 async function checkTabPermissions(tab) {
   try {
     const result = await chrome.storage.sync.get(['allowedWebsites']);
-    const websites = result.allowedWebsites || ['*.senpiper.com'];
+    const websites = result.allowedWebsites || [];
     
     const currentUrl = new URL(tab.url);
     const isAllowed = websites.some(pattern => {
@@ -113,13 +113,13 @@ async function checkTabPermissions(tab) {
         tabId: tab.id
       });
       chrome.action.setTitle({
-        title: "Quick Copy LocalStorage (Available)",
+        title: "Quick Copy LocalStorage Item (Available)",
         tabId: tab.id
       });
     } else {
       // Use a grayed out version or different icon for non-allowed sites
       chrome.action.setTitle({
-        title: "Quick Copy LocalStorage (Not available on this site)",
+        title: "Quick Copy LocalStorage Item (Not available on this site)",
         tabId: tab.id
       });
     }
@@ -140,8 +140,29 @@ async function copyStorageValueFromContextMenu(tab) {
   try {
     // Check if current tab matches allowed websites and get storage key
     const result = await chrome.storage.sync.get(['allowedWebsites', 'storageKey']);
-    const websites = result.allowedWebsites || ['*.senpiper.com'];
-    const storageKey = result.storageKey || 'authToken';
+    const websites = result.allowedWebsites || [];
+    const storageKey = result.storageKey || '';
+    
+    // Check if extension is configured
+    if (!storageKey || !storageKey.trim()) {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icon48.png',
+        title: 'Quick Copy LocalStorage Item',
+        message: 'Please configure a localStorage key first'
+      });
+      return;
+    }
+    
+    if (websites.length === 0) {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icon48.png',
+        title: 'Quick Copy LocalStorage Item',
+        message: 'Please add websites to the allowed list first'
+      });
+      return;
+    }
     
     const currentUrl = new URL(tab.url);
     const isAllowed = websites.some(pattern => {
@@ -168,7 +189,7 @@ async function copyStorageValueFromContextMenu(tab) {
       chrome.notifications.create({
         type: 'basic',
         iconUrl: 'icon48.png',
-        title: 'Quick Copy LocalStorage',
+        title: 'Quick Copy LocalStorage Item',
         message: `This extension only works on allowed websites: ${websites.join(', ')}`
       });
       return;
@@ -197,7 +218,7 @@ async function copyStorageValueFromContextMenu(tab) {
         chrome.notifications.create({
           type: 'basic',
           iconUrl: 'icon48.png',
-          title: 'Quick Copy LocalStorage',
+          title: 'Quick Copy LocalStorage Item',
           message: `${storageKey} copied to clipboard!`
         });
       } else {
@@ -205,7 +226,7 @@ async function copyStorageValueFromContextMenu(tab) {
         chrome.notifications.create({
           type: 'basic',
           iconUrl: 'icon48.png',
-          title: 'Quick Copy LocalStorage',
+          title: 'Quick Copy LocalStorage Item',
           message: `${storageKey} not found in localStorage`
         });
       }
@@ -214,7 +235,7 @@ async function copyStorageValueFromContextMenu(tab) {
       chrome.notifications.create({
         type: 'basic',
         iconUrl: 'icon48.png',
-        title: 'Quick Copy LocalStorage',
+        title: 'Quick Copy LocalStorage Item',
         message: 'Failed to access localStorage'
       });
     }
@@ -223,7 +244,7 @@ async function copyStorageValueFromContextMenu(tab) {
     chrome.notifications.create({
       type: 'basic',
       iconUrl: 'icon48.png',
-      title: 'Quick Copy LocalStorage',
+      title: 'Quick Copy LocalStorage Item',
       message: 'Error copying storage value'
     });
   }

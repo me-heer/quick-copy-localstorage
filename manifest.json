@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Quick Copy LocalStorage",
+  "name": "Quick Copy LocalStorage Item",
   "version": "1.0.0",
   "description": "Quickly copy any localStorage item with one click",
   "permissions": [
@@ -11,20 +11,12 @@
     "contextMenus",
     "notifications"
   ],
-  "host_permissions": [
-    "*://*.senpiper.com/*"
-  ],
+  "host_permissions": [],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Quick Copy LocalStorage"
+    "default_title": "Quick Copy LocalStorage Item"
   },
-  "content_scripts": [
-    {
-      "matches": ["*://*.senpiper.com/*"],
-      "js": ["content.js"],
-      "run_at": "document_idle"
-    }
-  ],
+  "content_scripts": [],
   "background": {
     "service_worker": "background.js"
   },
