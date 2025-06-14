@@ -1,4 +1,4 @@
-# quick-copy-localstorage
+# A ChromeExtension to Quickly copy a LocalStorage Item
 Chrome Extension that copies the value of the specified key from LocalStorage and adds it to your Clipboard
 
 ### What is this?
