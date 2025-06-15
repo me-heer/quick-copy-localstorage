@@ -1,5 +1,4 @@
 # A ChromeExtension to Quickly copy a LocalStorage Item
-Chrome Extension that copies the value of the specified key from LocalStorage and adds it to your Clipboard
 
 ### What is this?
 - A chrome extension that lets you copy a specified item from the local storage with one click.
@@ -13,7 +12,7 @@ Chrome Extension that copies the value of the specified key from LocalStorage an
 
 1. **Navigate to an allowed website**
 2. Right-click
-3. Click "Copy Storage Value"
+3. Click "Copy Storage Value" (OR there's a keyboard shortcut, you can press Ctrl + Shift + L (Cmd for mac))
 4. The configured item from localStorage will be copied to your clipboard
 
 ### Adding New Websites
