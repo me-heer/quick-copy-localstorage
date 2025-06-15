@@ -24,5 +24,14 @@
     "16": "icon16.png",
     "48": "icon48.png",
     "128": "icon128.png"
+  },
+  "commands": {
+    "copy-storage-item": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+L",
+        "mac": "Ctrl+Shift+L"
+      },
+      "description": "Copy localStorage item to clipboard"
+    }
   }
 } 

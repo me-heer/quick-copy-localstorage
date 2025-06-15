@@ -277,4 +277,135 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   
   return true;
-}); 
+});
+
+// Handle keyboard shortcut commands
+chrome.commands.onCommand.addListener(async (command) => {
+  console.log('Command received:', command);
+  if (command === 'copy-storage-item') {
+    console.log('Copy storage item command triggered');
+    // Get the current active tab
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tabs.length > 0) {
+      console.log('Active tab found:', tabs[0].url);
+      await copyStorageValueFromKeyboardShortcut(tabs[0]);
+    } else {
+      console.log('No active tab found');
+    }
+  }
+});
+
+// Copy storage value from keyboard shortcut
+async function copyStorageValueFromKeyboardShortcut(tab) {
+  try {
+    // Check if current tab matches allowed websites and get storage key
+    const result = await chrome.storage.sync.get(['allowedWebsites', 'storageKey']);
+    const websites = result.allowedWebsites || [];
+    const storageKey = result.storageKey || '';
+    
+    // Check if extension is configured
+    if (!storageKey || !storageKey.trim()) {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icon48.png',
+        title: 'Quick Copy LocalStorage Item',
+        message: 'Please configure a localStorage key first (Ctrl+Shift+L shortcut)'
+      });
+      return;
+    }
+    
+    if (websites.length === 0) {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icon48.png',
+        title: 'Quick Copy LocalStorage Item',
+        message: 'Please add websites to the allowed list first (Ctrl+Shift+L shortcut)'
+      });
+      return;
+    }
+    
+    const currentUrl = new URL(tab.url);
+    const isAllowed = websites.some(pattern => {
+      // Convert wildcard pattern to regex
+      // Handle different pattern formats
+      if (pattern.startsWith('*.')) {
+        // For patterns like *.senpiper.com, match any subdomain
+        const domain = pattern.substring(2); // Remove *.
+        const escapedDomain = domain.replace(/\./g, '\\.');
+        const regex = new RegExp(`^.*\\.${escapedDomain}$`);
+        return regex.test(currentUrl.hostname);
+      } else if (pattern.includes('*')) {
+        // For other wildcard patterns
+        const regex = pattern.replace(/\*/g, '.*').replace(/\./g, '\\.');
+        return new RegExp(`^${regex}$`).test(currentUrl.hostname);
+      } else {
+        // Exact match
+        return pattern === currentUrl.hostname;
+      }
+    });
+    
+    if (!isAllowed) {
+      // Show notification that site is not allowed
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icon48.png',
+        title: 'Quick Copy LocalStorage Item',
+        message: `Shortcut (Ctrl+Shift+L) only works on allowed websites: ${websites.join(', ')}`
+      });
+      return;
+    }
+    
+    // Execute content script to get storage value
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      function: getValueFromLocalStorageForContextMenu,
+      args: [storageKey]
+    });
+    
+    if (results && results[0] && results[0].result !== undefined) {
+      const storageValue = results[0].result;
+      
+      if (storageValue) {
+        // Use the offscreen API or content script to copy to clipboard
+        // Since we can't access clipboard directly from background script
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          function: copyToClipboard,
+          args: [storageValue]
+        });
+        
+        // Show success notification
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: 'icon48.png',
+          title: 'Quick Copy LocalStorage Item',
+          message: `${storageKey} copied to clipboard! (Ctrl+Shift+L)`
+        });
+      } else {
+        // Show error notification
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: 'icon48.png',
+          title: 'Quick Copy LocalStorage Item',
+          message: `${storageKey} not found in localStorage (Ctrl+Shift+L)`
+        });
+      }
+    } else {
+      // Show error notification
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icon48.png',
+        title: 'Quick Copy LocalStorage Item',
+        message: 'Failed to access localStorage (Ctrl+Shift+L)'
+      });
+    }
+  } catch (error) {
+    console.error('Error copying storage value from keyboard shortcut:', error);
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'icon48.png',
+      title: 'Quick Copy LocalStorage Item',
+      message: 'Error copying storage value (Ctrl+Shift+L)'
+    });
+  }
+} 
