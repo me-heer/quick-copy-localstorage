@@ -12,7 +12,7 @@
 
 1. **Navigate to an allowed website**
 2. Right-click
-3. Click "Copy Storage Value" (OR there's a keyboard shortcut, you can press Ctrl + Shift + L (Cmd for mac))
+3. Click "Copy Storage Value" (OR) Press `Ctrl + Shift + L` (Command + Shift + L for MacOS)
 4. The configured item from localStorage will be copied to your clipboard
 
 ### Adding New Websites
